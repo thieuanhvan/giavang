@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Giá vàng hôm nay</title>
+<meta name="description" content="Giá vàng miếng SJC, vàng nhẫn và giá vàng thế giới quy đổi, cập nhật mỗi giờ, kèm biểu đồ một năm.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='10' y='35' width='80' height='40' rx='6' fill='%23c9a227'/></svg>">
+<style>
+:root{--bg:#faf8f3;--fg:#1f1b14;--muted:#6b6457;--card:#fff;--line:#e6e0d3;--accent:#9a7410;--up:#0a7f3f;--down:#b42318;--s1:#b8860b;--s2:#6b4fbb;--s3:#1f77b4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15130f;--fg:#ede8dc;--muted:#a39b8b;--card:#1f1c16;--line:#36312a;--accent:#e0b84a;--up:#4cc38a;--down:#f97066;--s1:#e0b84a;--s2:#a991f2;--s3:#6cb4ee}}
+:root[data-theme="dark"]{--bg:#15130f;--fg:#ede8dc;--muted:#a39b8b;--card:#1f1c16;--line:#36312a;--accent:#e0b84a;--up:#4cc38a;--down:#f97066;--s1:#e0b84a;--s2:#a991f2;--s3:#6cb4ee}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:28px 16px 56px}
+h1{font-size:1.6rem;margin:0 0 4px}
+h2{font-size:1.1rem;margin:32px 0 10px;color:var(--accent)}
+.mut{color:var(--muted);font-size:.9rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.card .lbl{font-size:.85rem;color:var(--muted)}
+.card .val{font-size:1.45rem;font-weight:700;font-variant-numeric:tabular-nums;margin:2px 0}
+.card .sub{font-size:.88rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.up{color:var(--up)}.down{color:var(--down)}
+.chartbox{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;height:360px;position:relative}
+.ranges{display:flex;gap:6px;margin:0 0 10px;flex-wrap:wrap}
+.ranges button{font:inherit;font-size:.88rem;padding:4px 12px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--fg);cursor:pointer}
+.ranges button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.93rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal}
+th{font-weight:600;background:var(--bg)}
+footer{margin-top:40px;border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font-size:.85rem}
+a{color:var(--accent)}
+#err{display:none;color:var(--down);font-size:.88rem;margin-top:10px}
+</style>
+</head>
+<body>
+<main>
+<h1>Giá vàng hôm nay</h1>
+<p class="mut" id="upd">Đang tải…</p>
+
+<div class="grid">
+  <div class="card"><div class="lbl">Vàng miếng SJC (bán ra)</div><div class="val" id="sjcS">–</div><div class="sub" id="sjcB"></div></div>
+  <div class="card"><div class="lbl">Vàng nhẫn SJC 999.9 (bán ra)</div><div class="val" id="nhanS">–</div><div class="sub" id="nhanB"></div></div>
+  <div class="card"><div class="lbl">Vàng thế giới</div><div class="val" id="xau">–</div><div class="sub" id="xauVnd"></div></div>
+  <div class="card"><div class="lbl">SJC đắt hơn thế giới</div><div class="val" id="gap">–</div><div class="sub" id="gapPct"></div></div>
+</div>
+<p id="err"></p>
+
+<h2>Biểu đồ theo ngày</h2>
+<div class="ranges" role="group" aria-label="Khoảng thời gian">
+  <button data-d="30">1 tháng</button><button data-d="90">3 tháng</button><button data-d="365" aria-pressed="true">1 năm</button><button data-d="0">Tất cả</button>
+</div>
+<div class="chartbox"><canvas id="chart" aria-label="Biểu đồ giá vàng theo ngày"></canvas></div>
+<p class="mut">Đơn vị: triệu đồng/lượng. Mỗi ngày lấy giá lần cập nhật cuối trong ngày. Giá thế giới quy đổi = giá USD/ounce × tỷ giá USD × 1,2057 (1 lượng = 37,5 g, 1 ounce = 31,10 g), chưa tính thuế và phí.</p>
+
+<h2>Giá theo thương hiệu</h2>
+<div class="tw"><table><thead><tr><th>Loại vàng</th><th>Mua vào</th><th>Bán ra</th><th>Đổi (bán)</th></tr></thead><tbody id="brands"></tbody></table></div>
+<p class="mut" id="brandsNote"></p>
+
+<h2>Bảng giá PNJ (TP.HCM)</h2>
+<div class="tw"><table><thead><tr><th>Loại vàng</th><th>Mua vào</th><th>Bán ra</th></tr></thead><tbody id="pnj"></tbody></table></div>
+<p class="mut" id="pnjNote"></p>
+
+<footer>
+<p>Trang tự lấy giá mỗi giờ từ các nguồn công khai: <a href="https://www.vang.today/">vang.today</a> (giá các thương hiệu và giá thế giới), bảng giá <a href="https://www.pnj.com.vn/site/gia-vang">PNJ</a>, tỷ giá <a href="https://portal.vietcombank.com.vn/Personal/TG/Pages/ty-gia.aspx">Vietcombank</a>. Giá chỉ để tham khảo, không phải lời khuyên mua bán; giá thật tại cửa hàng có thể khác.</p>
+<p>Trang cá nhân của <a href="https://info.thieuanhvan.com/">Thiều Anh Vân</a>.</p>
+</footer>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const tr=v=>v==null?'–':(v/1e6).toLocaleString('vi-VN',{minimumFractionDigits:1,maximumFractionDigits:2});
+const dong=v=>v==null?'–':Math.round(v).toLocaleString('vi-VN');
+let D=null,chart=null,days=365;
+
+function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+
+function render(){
+  const n=D.now,k=D.luongPerOz;
+  $('upd').textContent='Cập nhật lúc '+new Date(D.updated).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric'})+' (giờ Việt Nam). Tự cập nhật mỗi giờ.';
+  $('sjcS').textContent=tr(n.sjcS)+' tr';
+  $('sjcB').textContent='Mua vào '+tr(n.sjcB)+' tr/lượng';
+  $('nhanS').textContent=tr(n.nhanS)+' tr';
+  $('nhanB').textContent='Mua vào '+tr(n.nhanB)+' tr/lượng';
+  $('xau').textContent=n.xau?n.xau.toLocaleString('en-US',{maximumFractionDigits:1})+' USD/oz':'–';
+  const w=n.xau&&n.usd?n.xau*n.usd*k:null;
+  $('xauVnd').textContent=w?'≈ '+tr(w)+' tr/lượng (USD '+dong(n.usd)+' đ)':'';
+  if(w&&n.sjcS){const g=n.sjcS-w;$('gap').textContent=(g>=0?'+':'')+tr(g)+' tr';$('gapPct').textContent=(g/w*100).toLocaleString('vi-VN',{maximumFractionDigits:1})+'% so với giá thế giới quy đổi';}
+  if(D.errors&&D.errors.length){$('err').style.display='block';$('err').textContent='Lần lấy giá gần nhất có nguồn lỗi, đang dùng số cũ cho phần đó: '+D.errors.join('; ');}
+
+  $('brands').innerHTML=D.brands.map(b=>{const c=b.changeSell;const cl=c>0?'up':c<0?'down':'';const ct=c==null||c===0?'0':(c>0?'+':'')+dong(c);return `<tr><td>${b.name}</td><td>${dong(b.buy)}</td><td>${dong(b.sell)}</td><td class="${cl}">${ct}</td></tr>`;}).join('');
+  $('brandsNote').textContent='Đồng/lượng. Nguồn vang.today'+(D.vangTodayTime?', cập nhật '+D.vangTodayTime:'')+'. Cột "Đổi" là mức tăng giảm giá bán so với lần cập nhật trước của nguồn.';
+  $('pnj').innerHTML=D.pnj.map(p=>`<tr><td>${p.name}</td><td>${dong(p.buy)}</td><td>${p.sell?dong(p.sell):'–'}</td></tr>`).join('');
+  $('pnjNote').textContent='Đồng/lượng (PNJ niêm yết theo chỉ, đã nhân 10).'+(D.pnjTime?' PNJ cập nhật '+D.pnjTime+'.':'');
+  draw();
+}
+
+function draw(){
+  let h=D.history;
+  if(days){const from=new Date(Date.now()-days*864e5).toISOString().slice(0,10);h=h.filter(r=>r.d>=from);}
+  const k=D.luongPerOz;
+  // Days before the USD rate was recorded use the earliest known rate, so the world line is continuous.
+  const firstUsd=(D.history.find(r=>r.usd)||{}).usd||D.now.usd;
+  const lab=h.map(r=>r.d.slice(8,10)+'/'+r.d.slice(5,7)+(days===0||days>90?'/'+r.d.slice(2,4):''));
+  const ds=[
+    {label:'SJC miếng (bán)',data:h.map(r=>r.sjcS?r.sjcS/1e6:null),borderColor:cssVar('--s1')},
+    {label:'Nhẫn SJC 999.9 (bán)',data:h.map(r=>r.nhanS?r.nhanS/1e6:null),borderColor:cssVar('--s2')},
+    {label:'Thế giới quy đổi',data:h.map(r=>r.xau?r.xau*(r.usd||firstUsd)*k/1e6:null),borderColor:cssVar('--s3'),borderDash:[5,4]},
+  ].map(s=>({...s,backgroundColor:s.borderColor,borderWidth:2,pointRadius:0,pointHoverRadius:4,spanGaps:true,tension:.15}));
+  const grid=cssVar('--line'),fg=cssVar('--muted');
+  if(chart)chart.destroy();
+  chart=new Chart($('chart'),{type:'line',data:{labels:lab,datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{color:fg,boxWidth:14}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y==null?'–':c.parsed.y.toLocaleString('vi-VN',{maximumFractionDigits:2}))+' tr'}}},
+    scales:{x:{ticks:{color:fg,maxTicksLimit:8,maxRotation:0},grid:{color:grid}},y:{ticks:{color:fg},grid:{color:grid}}}}});
+}
+
+document.querySelectorAll('.ranges button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.ranges button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  days=Number(b.dataset.d);if(D)draw();
+}));
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(D)draw();});
+
+fetch('/api/data').then(r=>r.json()).then(j=>{D=j;render();}).catch(e=>{$('upd').textContent='Không tải được dữ liệu: '+e.message;});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+// Cloudflare Worker for giavang.thieuanhvan.com: one dashboard page of Vietnamese and world gold prices.
+// A cron trigger runs every hour, fetches prices from free public sources and keeps them in the KV namespace GIA.
+// The KV namespace has no id here: wrangler creates it automatically on the first deploy.
+// Build command in Cloudflare: leave empty. Deploy command: npx wrangler deploy
+{
+  "name": "giavang",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "triggers": {
+    "crons": ["5 * * * *"]
+  },
+  "kv_namespaces": [
+    { "binding": "GIA" }
+  ],
+  "routes": [
+    { "pattern": "giavang.thieuanhvan.com", "custom_domain": true }
+  ],
+  "workers_dev": true,
+  "preview_urls": false
+}
