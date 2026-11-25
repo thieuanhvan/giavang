@@ -76,6 +76,12 @@ const $=id=>document.getElementById(id);
 const tr=v=>v==null?'–':(v/1e6).toLocaleString('vi-VN',{minimumFractionDigits:1,maximumFractionDigits:2});
 const dong=v=>v==null?'–':Math.round(v).toLocaleString('vi-VN');
 let D=null,chart=null,days=365;
+// vang.today names are unaccented English; map its codes to Vietnamese names, fall back to the source name.
+const TEN={BT9999NTT:'Bảo Tín Minh Châu – nhẫn tròn trơn 999.9',BTSJC:'Bảo Tín Minh Châu – vàng miếng SJC',
+  DOJINHTV:'DOJI – nhẫn Hưng Thịnh Vượng 999.9',DOHNL:'DOJI Hà Nội – vàng miếng SJC',DOHCML:'DOJI TP.HCM – vàng miếng SJC',
+  PQHNVM:'PNJ Hà Nội – vàng miếng SJC',PQHN24NTT:'PNJ Hà Nội – nhẫn trơn 999.9',
+  SJL1L10:'SJC – vàng miếng 1 lượng, 10 lượng',SJ9999:'SJC – nhẫn 999.9',
+  VNGSJC:'VN Gold – vàng miếng SJC',VIETTINMSJC:'Viettin – vàng miếng SJC'};
 
 function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
 
@@ -92,7 +98,7 @@ function render(){
   if(w&&n.sjcS){const g=n.sjcS-w;$('gap').textContent=(g>=0?'+':'')+tr(g)+' tr';$('gapPct').textContent=(g/w*100).toLocaleString('vi-VN',{maximumFractionDigits:1})+'% so với giá thế giới quy đổi';}
   if(D.errors&&D.errors.length){$('err').style.display='block';$('err').textContent='Lần lấy giá gần nhất có nguồn lỗi, đang dùng số cũ cho phần đó: '+D.errors.join('; ');}
 
-  $('brands').innerHTML=D.brands.map(b=>{const c=b.changeSell;const cl=c>0?'up':c<0?'down':'';const ct=c==null||c===0?'0':(c>0?'+':'')+dong(c);return `<tr><td>${b.name}</td><td>${dong(b.buy)}</td><td>${dong(b.sell)}</td><td class="${cl}">${ct}</td></tr>`;}).join('');
+  $('brands').innerHTML=D.brands.map(b=>{const c=b.changeSell;const cl=c>0?'up':c<0?'down':'';const ct=c==null||c===0?'0':(c>0?'+':'')+dong(c);return `<tr><td>${TEN[b.code]||b.name}</td><td>${dong(b.buy)}</td><td>${dong(b.sell)}</td><td class="${cl}">${ct}</td></tr>`;}).join('');
   $('brandsNote').textContent='Đồng/lượng. Nguồn vang.today'+(D.vangTodayTime?', cập nhật '+D.vangTodayTime:'')+'. Cột "Đổi" là mức tăng giảm giá bán so với lần cập nhật trước của nguồn.';
   $('pnj').innerHTML=D.pnj.map(p=>`<tr><td>${p.name}</td><td>${dong(p.buy)}</td><td>${p.sell?dong(p.sell):'–'}</td></tr>`).join('');
   $('pnjNote').textContent='Đồng/lượng (PNJ niêm yết theo chỉ, đã nhân 10).'+(D.pnjTime?' PNJ cập nhật '+D.pnjTime+'.':'');
